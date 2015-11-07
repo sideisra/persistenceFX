@@ -1,0 +1,13 @@
+*.class
+target
+*.bak
+
+# eclipse #
+*.prefs
+.classpath
+.project
+.metadata
+
+# IntelliJ #
+*.iml
+.idea/
