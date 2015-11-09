@@ -1,36 +1,47 @@
 package de.saxsys.persistencefx;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Collections;
 
 import org.junit.Test;
 
-import de.saxsys.persistencefx.persistence.ModelPersister;
+import de.saxsys.persistencefx.model.TestModel;
+import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 public class PersistenceFXTest {
 
  @Test
- public void fluentBuilderShouldNotSetAutoCommit() {
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersister(null).build();
-  assertThat(persistenceFX.isAutoCommit()).isFalse();
+ public void propertyChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse() {
+  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+  final TestModel model = new TestModel();
+  when(persistenceProvider.load()).thenReturn(model);
+
+  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+  model.setStringProp("new");
+
+  verify(persistenceProvider).propertyChanged(model);
  }
 
  @Test
- public void fluentBuilderShouldSetAutoCommit() {
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersister(null).autoCommit().build();
-  assertThat(persistenceFX.isAutoCommit()).isTrue();
- }
+ public void listChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
+   throws NoSuchFieldException, SecurityException {
+  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+  final TestModel model = new TestModel();
+  when(persistenceProvider.load()).thenReturn(model);
 
- @Test
- public void loadShouldDelegateToModelPersister() {
-  final String model = "model";
-  final ModelPersister<String> modelPersister = mock(ModelPersister.class);
-  when(modelPersister.load()).thenReturn(model);
+  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersister(modelPersister).build();
-  final String loadedModel = persistenceFX.load();
+  final String newValue = "new";
+  model.getListProp().add(newValue);
 
-  assertThat(loadedModel).isSameAs(model);
+  verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
+    eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
+
  }
 }

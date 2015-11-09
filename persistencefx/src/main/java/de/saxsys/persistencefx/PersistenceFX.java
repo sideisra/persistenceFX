@@ -1,22 +1,29 @@
 package de.saxsys.persistencefx;
 
-import de.saxsys.persistencefx.persistence.ModelPersister;
+import java.lang.reflect.Field;
+import java.util.List;
+
+import de.saxsys.persistencefx.model.ModelListener;
+import de.saxsys.persistencefx.model.ModelWalker;
+import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 /**
  * Central class for handling model persistence.
  */
-public class PersistenceFX<ModelType> {
+public class PersistenceFX<ModelType> implements ModelListener {
 
- private final ModelPersister<ModelType> persister;
+ private final PersistenceProvider<ModelType> persistenceProvider;
  private boolean autoCommit;
 
- public PersistenceFX(final ModelPersister<ModelType> persister) {
+ private ModelType model;
+
+ public PersistenceFX(final PersistenceProvider<ModelType> persistenceProvider) {
   super();
-  this.persister = persister;
+  this.persistenceProvider = persistenceProvider;
  }
 
- public static <ModelType> FluentBuilder<ModelType> withPersister(final ModelPersister<ModelType> persister) {
-  return new FluentBuilder<ModelType>(persister);
+ public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(final PersistenceProvider<ModelType> persistenceProvider) {
+  return new FluentBuilder<ModelType>(persistenceProvider);
  }
 
  public boolean isAutoCommit() {
@@ -27,16 +34,21 @@ public class PersistenceFX<ModelType> {
   this.autoCommit = autoCommit;
  }
 
- public ModelType load() {
-  return persister.load();
+ private void initModel() {
+  model = persistenceProvider.load();
+  new ModelWalker().walkModel(model, this);
+ }
+
+ public ModelType getModel() {
+  return model;
  }
 
  public static class FluentBuilder<ModelType> {
 
   private final PersistenceFX<ModelType> persistenceFX;
 
-  public FluentBuilder(final ModelPersister<ModelType> persister) {
-   this.persistenceFX = new PersistenceFX<ModelType>(persister);
+  public FluentBuilder(final PersistenceProvider<ModelType> persistenceProvider) {
+   this.persistenceFX = new PersistenceFX<ModelType>(persistenceProvider);
   }
 
   public FluentBuilder<ModelType> autoCommit() {
@@ -45,9 +57,21 @@ public class PersistenceFX<ModelType> {
   }
 
   public PersistenceFX<ModelType> build() {
+   persistenceFX.initModel();
    return persistenceFX;
   }
 
+ }
+
+ @Override
+ public void propertyChanged(final Object containingModelEntity) {
+  persistenceProvider.propertyChanged(containingModelEntity);
+ }
+
+ @Override
+ public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
+   final List<?> removed) {
+  persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed);
  }
 
 }
