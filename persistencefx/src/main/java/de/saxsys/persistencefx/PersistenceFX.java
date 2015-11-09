@@ -6,6 +6,8 @@ import java.util.List;
 import de.saxsys.persistencefx.model.ModelListener;
 import de.saxsys.persistencefx.model.ModelWalker;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 /**
  * Central class for handling model persistence.
@@ -13,7 +15,7 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
 public class PersistenceFX<ModelType> implements ModelListener {
 
  private final PersistenceProvider<ModelType> persistenceProvider;
- private boolean autoCommit;
+ private final BooleanProperty autoCommit = new SimpleBooleanProperty();
 
  private ModelType model;
 
@@ -22,16 +24,21 @@ public class PersistenceFX<ModelType> implements ModelListener {
   this.persistenceProvider = persistenceProvider;
  }
 
- public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(final PersistenceProvider<ModelType> persistenceProvider) {
+ public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(
+   final PersistenceProvider<ModelType> persistenceProvider) {
   return new FluentBuilder<ModelType>(persistenceProvider);
  }
 
+ public BooleanProperty autoCommitProperty() {
+  return this.autoCommit;
+ }
+
  public boolean isAutoCommit() {
-  return autoCommit;
+  return this.autoCommitProperty().get();
  }
 
  public void setAutoCommit(final boolean autoCommit) {
-  this.autoCommit = autoCommit;
+  this.autoCommitProperty().set(autoCommit);
  }
 
  private void initModel() {
@@ -65,13 +72,17 @@ public class PersistenceFX<ModelType> implements ModelListener {
 
  @Override
  public void propertyChanged(final Object containingModelEntity) {
-  persistenceProvider.propertyChanged(containingModelEntity);
+  if (autoCommit.get()) {
+   persistenceProvider.propertyChanged(containingModelEntity);
+  }
  }
 
  @Override
  public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
    final List<?> removed) {
-  persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed);
+  if (autoCommit.get()) {
+   persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed);
+  }
  }
 
 }

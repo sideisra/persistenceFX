@@ -3,6 +3,7 @@ package de.saxsys.persistencefx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -15,6 +16,13 @@ public class PersistenceFXBuilderTest {
 
  @Mock
  private PersistenceProvider<String> modelPersistenceProvider;
+
+ private final String model = "model";
+
+ @Before
+ public void setUp() {
+  when(modelPersistenceProvider.load()).thenReturn(model);
+ }
 
  @Test
  public void fluentBuilderShouldNotSetAutoCommit() {
@@ -32,13 +40,11 @@ public class PersistenceFXBuilderTest {
 
  @Test
  public void buildShouldDelegateToModelPersistenceProvider() {
-  final String model = "model";
-  when(modelPersistenceProvider.load()).thenReturn(model);
-
   final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersistenceProvider(modelPersistenceProvider)
     .build();
   final String loadedModel = persistenceFX.getModel();
 
   assertThat(loadedModel).isSameAs(model);
  }
+
 }
