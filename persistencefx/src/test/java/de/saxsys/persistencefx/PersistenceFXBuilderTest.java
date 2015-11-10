@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import de.saxsys.persistencefx.model.TestModel;
+import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 @RunWith(MockitoJUnitRunner.class)

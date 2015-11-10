@@ -1,4 +1,4 @@
-package de.saxsys.persistencefx.model;
+package de.saxsys.persistencefx.model.testdata;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleStringProperty;

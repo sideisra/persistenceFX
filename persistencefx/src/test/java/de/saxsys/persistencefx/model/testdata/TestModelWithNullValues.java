@@ -1,8 +1,9 @@
-package de.saxsys.persistencefx.model;
+package de.saxsys.persistencefx.model.testdata;
 
-public class TestModelWithProps {
-  private final TestObsValue stringProp = new TestObsValue();
-  private final TestObsList listProp = new TestObsList();
+public class TestModelWithNullValues {
+  private final TestObsValue stringProp = null;
+  private final TestObsList listProp = null;
+  private final TestModelWithoutProps withoutProps = null;
 
   public final TestObsValue stringPropProperty() {
     return this.stringProp;
@@ -18,6 +19,10 @@ public class TestModelWithProps {
 
   public TestObsList getListProp() {
     return listProp;
+  }
+
+  public TestModelWithoutProps getWithoutProps() {
+    return withoutProps;
   }
 
 }

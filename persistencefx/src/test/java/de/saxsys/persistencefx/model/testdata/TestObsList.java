@@ -1,4 +1,4 @@
-package de.saxsys.persistencefx.model;
+package de.saxsys.persistencefx.model.testdata;
 
 import java.util.Collection;
 import java.util.Iterator;

@@ -11,7 +11,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 
-import de.saxsys.persistencefx.model.TestModel;
+import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 public class PersistenceFXTest {
