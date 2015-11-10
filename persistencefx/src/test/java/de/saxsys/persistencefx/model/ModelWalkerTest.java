@@ -70,6 +70,16 @@ public class ModelWalkerTest {
     verifyZeroInteractions(testListener);
   }
 
+  @Test
+  public void nullValuesAreIgnored() {
+    final ModelWalker cut = new ModelWalker();
+    final TestModelWithNullValues testModel = new TestModelWithNullValues();
+    final ModelListener testListener = mock(ModelListener.class);
+    cut.walkModel(testModel, testListener);
+
+    verifyZeroInteractions(testListener);
+  }
+
   public static class TestTopLevelModel {
     private final StringProperty stringProp = new SimpleStringProperty("");
     private final TestModel testModel;

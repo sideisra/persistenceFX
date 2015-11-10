@@ -23,16 +23,14 @@ public class ModelWalker {
       try {
         field.setAccessible(true);
         final Object fieldInst = field.get(model);
-        if (fieldInst != null) {
-          if (fieldInst instanceof ObservableValue) {
-            listenToObservableValue(model, modelListener, fieldInst);
-            propsFound.set(true);
-          } else if (fieldInst instanceof ObservableList) {
-            listenToObservableList(model, modelListener, field, fieldInst);
-            propsFound.set(true);
-          } else {
-            nonProps.add(fieldInst);
-          }
+        if (fieldInst instanceof ObservableValue) {
+          listenToObservableValue(model, modelListener, fieldInst);
+          propsFound.set(true);
+        } else if (fieldInst instanceof ObservableList) {
+          listenToObservableList(model, modelListener, field, fieldInst);
+          propsFound.set(true);
+        } else {
+          nonProps.add(fieldInst);
         }
       } catch (final Exception escanEx) {
         throw new RuntimeException("Error while scanning model.", escanEx);
