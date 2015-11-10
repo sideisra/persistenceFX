@@ -9,15 +9,16 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import de.saxsys.persistencefx.model.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PersistenceFXBuilderTest {
 
  @Mock
- private PersistenceProvider<String> modelPersistenceProvider;
+ private PersistenceProvider<TestModel> modelPersistenceProvider;
 
- private final String model = "model";
+ private final TestModel model = new TestModel();
 
  @Before
  public void setUp() {
@@ -26,23 +27,23 @@ public class PersistenceFXBuilderTest {
 
  @Test
  public void fluentBuilderShouldNotSetAutoCommit() {
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersistenceProvider(modelPersistenceProvider)
-    .build();
+  final PersistenceFX<TestModel> persistenceFX = PersistenceFX
+    .<TestModel> withPersistenceProvider(modelPersistenceProvider).build();
   assertThat(persistenceFX.isAutoCommit()).isFalse();
  }
 
  @Test
  public void fluentBuilderShouldSetAutoCommit() {
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersistenceProvider(modelPersistenceProvider)
-    .autoCommit().build();
+  final PersistenceFX<TestModel> persistenceFX = PersistenceFX
+    .<TestModel> withPersistenceProvider(modelPersistenceProvider).autoCommit().build();
   assertThat(persistenceFX.isAutoCommit()).isTrue();
  }
 
  @Test
  public void buildShouldDelegateToModelPersistenceProvider() {
-  final PersistenceFX<String> persistenceFX = PersistenceFX.<String> withPersistenceProvider(modelPersistenceProvider)
-    .build();
-  final String loadedModel = persistenceFX.getModel();
+  final PersistenceFX<TestModel> persistenceFX = PersistenceFX
+    .<TestModel> withPersistenceProvider(modelPersistenceProvider).build();
+  final TestModel loadedModel = persistenceFX.getModel();
 
   assertThat(loadedModel).isSameAs(model);
  }
