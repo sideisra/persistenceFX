@@ -2,6 +2,7 @@ package de.saxsys.persistencefx;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 
+import de.saxsys.persistencefx.error.ErrorHandler;
 import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
@@ -159,4 +161,43 @@ public class PersistenceFXTest {
     verify(persistenceProvider).propertyChanged(model);
   }
 
+  @Test
+  public void errorsShouldBeDelegatedToErrorHandlerWhileCommiting()
+      throws NoSuchFieldException, SecurityException {
+    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
+
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
+        .errorHandler(errorHandler).build();
+
+    final RuntimeException runEx = new RuntimeException("testEx");
+    doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
+
+    model.setStringProp("new");
+
+    cut.commit();
+
+    verify(errorHandler).error(same(model), same(runEx));
+  }
+
+  @Test
+  public void errorsShouldBeDelegatedToErrorHandlerOnAutoCommit()
+      throws NoSuchFieldException, SecurityException {
+    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
+
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
+        .errorHandler(errorHandler).autoCommit().build();
+
+    final RuntimeException runEx = new RuntimeException("testEx");
+    doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
+
+    model.setStringProp("new");
+
+    verify(errorHandler).error(same(model), same(runEx));
+  }
 }
