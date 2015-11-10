@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import de.saxsys.persistencefx.error.BuildException;
 import de.saxsys.persistencefx.error.ErrorHandler;
 import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
@@ -66,5 +67,12 @@ public class PersistenceFXBuilderTest {
         .<TestModel> withPersistenceProvider(modelPersistenceProvider).errorHandler(errorHandler).build();
 
     assertThat(persistenceFX.getErrorHandler()).isSameAs(errorHandler);
+  }
+
+  @Test(expected = BuildException.class)
+  public void shouldThrowExceptionWhenModelIsNull() {
+    when(modelPersistenceProvider.load()).thenReturn(null);
+
+    PersistenceFX.withPersistenceProvider(modelPersistenceProvider).build();
   }
 }

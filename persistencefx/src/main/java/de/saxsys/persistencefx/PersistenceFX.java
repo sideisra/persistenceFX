@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.saxsys.persistencefx.error.BuildException;
 import de.saxsys.persistencefx.error.DefaultErrorHandler;
 import de.saxsys.persistencefx.error.ErrorHandler;
 import de.saxsys.persistencefx.model.ModelListener;
@@ -51,6 +52,9 @@ public class PersistenceFX<ModelType> implements ModelListener {
 
   private void initModel() {
     model = persistenceProvider.load();
+    if (model == null) {
+      throw new BuildException("given persistence provider has to supply an initial model on load.");
+    }
     new ModelWalker().walkModel(model, this);
     autoCommit.addListener((ChangeListener<Boolean>) (observable, oldValue, newValue) -> {
       if (newValue) {
