@@ -16,83 +16,147 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 public class PersistenceFXTest {
 
- @Test
- public void propertyChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue() {
-  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-  final TestModel model = new TestModel();
-  when(persistenceProvider.load()).thenReturn(model);
+  @Test
+  public void propertyChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue() {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
 
-  PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+    PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
 
-  model.setStringProp("new");
+    model.setStringProp("new");
 
-  verify(persistenceProvider).propertyChanged(model);
- }
+    verify(persistenceProvider).propertyChanged(model);
+  }
 
- @Test
- public void listChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue()
-   throws NoSuchFieldException, SecurityException {
-  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-  final TestModel model = new TestModel();
-  when(persistenceProvider.load()).thenReturn(model);
+  @Test
+  public void listChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
 
-  PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+    PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
 
-  final String newValue = "new";
-  model.getListProp().add(newValue);
+    final String newValue = "new";
+    model.getListProp().add(newValue);
 
-  verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
-    eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
+    verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
+        eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
 
- }
+  }
 
- @Test
- public void propertyChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse() {
-  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-  final TestModel model = new TestModel();
-  when(persistenceProvider.load()).thenReturn(model);
+  @Test
+  public void propertyChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse() {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
 
-  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+    PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-  model.setStringProp("new");
+    model.setStringProp("new");
 
-  verify(persistenceProvider, times(0)).propertyChanged(model);
- }
+    verify(persistenceProvider, times(0)).propertyChanged(model);
+  }
 
- @Test
- public void listChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
-   throws NoSuchFieldException, SecurityException {
-  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-  final TestModel model = new TestModel();
-  when(persistenceProvider.load()).thenReturn(model);
+  @Test
+  public void listChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
 
-  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+    PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-  final String newValue = "new";
-  model.getListProp().add(newValue);
+    final String newValue = "new";
+    model.getListProp().add(newValue);
 
-  verify(persistenceProvider, times(0)).listContentChanged(same(model),
-    eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
-    eq(Collections.emptyList()));
+    verify(persistenceProvider, times(0)).listContentChanged(same(model),
+        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+        eq(Collections.emptyList()));
+  }
 
- }
+  @Test
+  public void autoCommitStateShouldBeSwitchable() {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
 
- @Test
- public void autoCommitStateShouldBeSwitchable() {
-  final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-  final TestModel model = new TestModel();
-  when(persistenceProvider.load()).thenReturn(model);
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit()
+        .build();
 
-  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+    model.setStringProp("new");
 
-  model.setStringProp("new");
+    verify(persistenceProvider).propertyChanged(model);
 
-  verify(persistenceProvider).propertyChanged(model);
+    cut.setAutoCommit(false);
 
-  cut.setAutoCommit(false);
+    model.setStringProp("new2");
 
-  model.setStringProp("new2");
+    verify(persistenceProvider, times(1)).propertyChanged(model);
+  }
 
-  verify(persistenceProvider, times(1)).propertyChanged(model);
- }
+  @Test
+  public void suspendedEventsShouldBeDelegatedToPersistenceProviderOnCommit()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
+
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+    final String newValue = "new";
+    model.getListProp().add(newValue);
+    model.setStringProp("new");
+
+    verify(persistenceProvider, times(0)).propertyChanged(model);
+    verify(persistenceProvider, times(0)).listContentChanged(same(model),
+        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+        eq(Collections.emptyList()));
+
+    cut.commit();
+
+    verify(persistenceProvider).propertyChanged(model);
+    verify(persistenceProvider).listContentChanged(same(model),
+        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+        eq(Collections.emptyList()));
+  }
+
+  @Test
+  public void secondCommitShouldNotFireOldEvents()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
+
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+    model.setStringProp("new");
+
+    verify(persistenceProvider, times(0)).propertyChanged(model);
+
+    cut.commit();
+    cut.commit();
+
+    verify(persistenceProvider).propertyChanged(model);
+  }
+
+  @Test
+  public void eventsShouldBeFiredWhenActivatingAutoCommit()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+    final TestModel model = new TestModel();
+    when(persistenceProvider.load()).thenReturn(model);
+
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+    model.setStringProp("new");
+
+    verify(persistenceProvider, times(0)).propertyChanged(model);
+
+    cut.setAutoCommit(true);
+
+    verify(persistenceProvider).propertyChanged(model);
+  }
+
 }
