@@ -1,4 +1,4 @@
-package de.saxsys.persistencefx.persistence;
+package de.saxsys.persistencefx.jaxb;
 
 import java.lang.reflect.Field;
 import java.nio.file.Files;
@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+
+import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 /**
  * Implementation of {@link PersistenceProvider} for persisting the model with
