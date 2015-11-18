@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface PersistenceProvider<ModelType> {
 
- ModelType load();
+ List<ModelType> load();
 
  void propertyChanged(Object containingModelEntity);
 

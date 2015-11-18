@@ -15,53 +15,53 @@ import de.saxsys.persistencefx.PersistenceFX;
 
 public class JAXBProviderIT {
 
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+ @Rule
+ public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Test
-  public void jaxbModelShouldBeSavedAndLoadedAutomaticallyOnAutocommit() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
+ @Test
+ public void jaxbModelShouldBeSavedAndLoadedAutomaticallyOnAutocommit() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
 
-    final PersistenceFX<JaxbModel> persistenceFx = PersistenceFX
-        .withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
-    final JaxbModel initialModel = persistenceFx.getModel();
+  final PersistenceFX<JaxbModel> persistenceFx = PersistenceFX
+    .withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
+  final JaxbModel initialModel = persistenceFx.getModelRoots().get(0);
 
-    initialModel.setStringProp("new");
-    initialModel.getObslist().add("val1");
-    initialModel.getObslist().add("val2");
+  initialModel.setStringProp("new");
+  initialModel.getObslist().add("val1");
+  initialModel.getObslist().add("val2");
 
-    // check
-    PersistenceFX.withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
+  // check
+  PersistenceFX.withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
 
-    final JaxbModel loadedModel = persistenceFx.getModel();
+  final JaxbModel loadedModel = persistenceFx.getModelRoots().get(0);
 
-    assertThat(loadedModel.getStringProp()).isEqualTo("new");
-    assertThat(loadedModel.getObslist()).containsExactly("val1", "val2");
-  }
+  assertThat(loadedModel.getStringProp()).isEqualTo("new");
+  assertThat(loadedModel.getObslist()).containsExactly("val1", "val2");
+ }
 
-  @Test
-  public void jaxbModelShouldNotBeSavedAndLoadedAutomaticallyWhenAutocommitIsOff() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
+ @Test
+ public void jaxbModelShouldNotBeSavedAndLoadedAutomaticallyWhenAutocommitIsOff() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
 
-    final PersistenceFX<JaxbModel> persistenceFx = PersistenceFX
-        .withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).build();
-    final JaxbModel initialModel = persistenceFx.getModel();
+  final PersistenceFX<JaxbModel> persistenceFx = PersistenceFX
+    .withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).build();
+  final JaxbModel initialModel = persistenceFx.getModelRoots().get(0);
 
-    initialModel.setStringProp("new");
-    initialModel.getObslist().add("val1");
-    initialModel.getObslist().add("val2");
+  initialModel.setStringProp("new");
+  initialModel.getObslist().add("val1");
+  initialModel.getObslist().add("val2");
 
-    assertThat(testFile).doesNotExist();
+  assertThat(testFile).doesNotExist();
 
-    persistenceFx.commit();
+  persistenceFx.commit();
 
-    assertThat(testFile).exists();
+  assertThat(testFile).exists();
 
-    PersistenceFX.withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
+  PersistenceFX.withPersistenceProvider(new JAXBProvider<>(testFile, new JaxbModel())).autoCommit().build();
 
-    final JaxbModel loadedModel = persistenceFx.getModel();
+  final JaxbModel loadedModel = persistenceFx.getModelRoots().get(0);
 
-    assertThat(loadedModel.getStringProp()).isEqualTo("new");
-    assertThat(loadedModel.getObslist()).containsExactly("val1", "val2");
-  }
+  assertThat(loadedModel.getStringProp()).isEqualTo("new");
+  assertThat(loadedModel.getObslist()).containsExactly("val1", "val2");
+ }
 }

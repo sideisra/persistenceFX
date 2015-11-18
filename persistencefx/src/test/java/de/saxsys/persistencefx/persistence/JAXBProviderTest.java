@@ -14,65 +14,65 @@ import org.junit.rules.TemporaryFolder;
 
 public class JAXBProviderTest {
 
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+ @Rule
+ public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Test
-  public void whenXmlFileDoesNotExistsReturnInitialModel() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
-    final JaxbModel initialModel = new JaxbModel();
-    final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, initialModel);
+ @Test
+ public void whenXmlFileDoesNotExistsReturnInitialModel() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.getRoot().toPath().resolve("testfile.xml");
+  final JaxbModel initialModel = new JaxbModel();
+  final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, initialModel);
 
-    assertThat(cut.load()).isSameAs(initialModel);
-  }
+  assertThat(cut.load().get(0)).isSameAs(initialModel);
+ }
 
-  @Test
-  public void modelShouldBeLoadedFromXmlFile() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
+ @Test
+ public void modelShouldBeLoadedFromXmlFile() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
 
-    final JaxbModel testModel = new JaxbModel();
-    testModel.setStringProp("myStringProp");
-    testModel.getObslist().addAll("val1", "val2");
-    JAXBContext.newInstance(JaxbModel.class).createMarshaller().marshal(testModel, testFile.toFile());
+  final JaxbModel testModel = new JaxbModel();
+  testModel.setStringProp("myStringProp");
+  testModel.getObslist().addAll("val1", "val2");
+  JAXBContext.newInstance(JaxbModel.class).createMarshaller().marshal(testModel, testFile.toFile());
 
-    final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, new JaxbModel());
+  final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, new JaxbModel());
 
-    final JaxbModel loadedModel = cut.load();
-    assertThat(loadedModel.getStringProp()).isEqualTo(testModel.getStringProp());
-    assertThat(loadedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
-  }
+  final JaxbModel loadedModel = cut.load().get(0);
+  assertThat(loadedModel.getStringProp()).isEqualTo(testModel.getStringProp());
+  assertThat(loadedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
+ }
 
-  @Test
-  public void modelShouldBeSavedToXmlFileOnPropChangeEvent() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
+ @Test
+ public void modelShouldBeSavedToXmlFileOnPropChangeEvent() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
 
-    final JaxbModel testModel = new JaxbModel();
-    testModel.setStringProp("myStringProp");
-    testModel.getObslist().addAll("val1", "val2");
-    final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, testModel);
+  final JaxbModel testModel = new JaxbModel();
+  testModel.setStringProp("myStringProp");
+  testModel.getObslist().addAll("val1", "val2");
+  final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, testModel);
 
-    cut.propertyChanged(null);
+  cut.propertyChanged(null);
 
-    final JaxbModel savedModel = (JaxbModel) JAXBContext.newInstance(JaxbModel.class).createUnmarshaller()
-        .unmarshal(testFile.toFile());
-    assertThat(savedModel.getStringProp()).isEqualTo(testModel.getStringProp());
-    assertThat(savedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
-  }
+  final JaxbModel savedModel = (JaxbModel) JAXBContext.newInstance(JaxbModel.class).createUnmarshaller()
+    .unmarshal(testFile.toFile());
+  assertThat(savedModel.getStringProp()).isEqualTo(testModel.getStringProp());
+  assertThat(savedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
+ }
 
-  @Test
-  public void modelShouldBeSavedToXmlFileOnListChangeEvent() throws IOException, JAXBException {
-    final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
+ @Test
+ public void modelShouldBeSavedToXmlFileOnListChangeEvent() throws IOException, JAXBException {
+  final Path testFile = temporaryFolder.newFile("testfile.xml").toPath();
 
-    final JaxbModel testModel = new JaxbModel();
-    testModel.setStringProp("myStringProp");
-    testModel.getObslist().addAll("val1", "val2");
-    final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, testModel);
+  final JaxbModel testModel = new JaxbModel();
+  testModel.setStringProp("myStringProp");
+  testModel.getObslist().addAll("val1", "val2");
+  final JAXBProvider<JaxbModel> cut = new JAXBProvider<JaxbModel>(testFile, testModel);
 
-    cut.listContentChanged(null, null, null, null);
+  cut.listContentChanged(null, null, null, null);
 
-    final JaxbModel savedModel = (JaxbModel) JAXBContext.newInstance(JaxbModel.class).createUnmarshaller()
-        .unmarshal(testFile.toFile());
-    assertThat(savedModel.getStringProp()).isEqualTo(testModel.getStringProp());
-    assertThat(savedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
-  }
+  final JaxbModel savedModel = (JaxbModel) JAXBContext.newInstance(JaxbModel.class).createUnmarshaller()
+    .unmarshal(testFile.toFile());
+  assertThat(savedModel.getStringProp()).isEqualTo(testModel.getStringProp());
+  assertThat(savedModel.getObslist()).containsExactlyElementsOf(testModel.getObslist());
+ }
 }

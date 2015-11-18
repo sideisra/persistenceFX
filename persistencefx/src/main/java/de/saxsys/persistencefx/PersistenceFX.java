@@ -15,133 +15,136 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  * Central class for handling model persistence.
  */
-public class PersistenceFX<ModelType> implements ModelListener {
+public class PersistenceFX<ModelRootType> implements ModelListener {
 
-  private final PersistenceProvider<ModelType> persistenceProvider;
-  private final BooleanProperty autoCommit = new SimpleBooleanProperty();
-  private final List<Runnable> events = new LinkedList<>();
-  private final ObjectProperty<ErrorHandler> errorHandler = new SimpleObjectProperty<>(new DefaultErrorHandler());
+ private final PersistenceProvider<ModelRootType> persistenceProvider;
+ private final BooleanProperty autoCommit = new SimpleBooleanProperty();
+ private final List<Runnable> events = new LinkedList<>();
+ private final ObjectProperty<ErrorHandler> errorHandler = new SimpleObjectProperty<>(new DefaultErrorHandler());
 
-  private ModelType model;
+ private final ObservableList<ModelRootType> modelRoots = FXCollections.observableArrayList();
 
-  public PersistenceFX(final PersistenceProvider<ModelType> persistenceProvider) {
-    super();
-    this.persistenceProvider = persistenceProvider;
+ public PersistenceFX(final PersistenceProvider<ModelRootType> persistenceProvider) {
+  super();
+  this.persistenceProvider = persistenceProvider;
+ }
+
+ public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(
+   final PersistenceProvider<ModelType> persistenceProvider) {
+  return new FluentBuilder<ModelType>(persistenceProvider);
+ }
+
+ public BooleanProperty autoCommitProperty() {
+  return this.autoCommit;
+ }
+
+ public boolean isAutoCommit() {
+  return this.autoCommitProperty().get();
+ }
+
+ public void setAutoCommit(final boolean autoCommit) {
+  this.autoCommitProperty().set(autoCommit);
+ }
+
+ private void initModel() {
+  final List<ModelRootType> loadedModelRoots = persistenceProvider.load();
+  if (loadedModelRoots == null) {
+   throw new BuildException("given persistence provider has to supply initial model roots on load.");
+  }
+  modelRoots.setAll(loadedModelRoots);
+  new ModelWalker().walkModelRoots(modelRoots, this);
+  autoCommit.addListener((ChangeListener<Boolean>) (observable, oldValue, newValue) -> {
+   if (newValue) {
+    commit();
+   }
+  });
+ }
+
+ public ObservableList<ModelRootType> getModelRoots() {
+  return modelRoots;
+ }
+
+ public static class FluentBuilder<ModelType> {
+
+  private final PersistenceFX<ModelType> persistenceFX;
+
+  public FluentBuilder(final PersistenceProvider<ModelType> persistenceProvider) {
+   this.persistenceFX = new PersistenceFX<ModelType>(persistenceProvider);
   }
 
-  public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(
-      final PersistenceProvider<ModelType> persistenceProvider) {
-    return new FluentBuilder<ModelType>(persistenceProvider);
+  public FluentBuilder<ModelType> autoCommit() {
+   persistenceFX.setAutoCommit(true);
+   return this;
   }
 
-  public BooleanProperty autoCommitProperty() {
-    return this.autoCommit;
+  public PersistenceFX<ModelType> build() {
+   persistenceFX.initModel();
+   return persistenceFX;
   }
 
-  public boolean isAutoCommit() {
-    return this.autoCommitProperty().get();
+  public FluentBuilder<ModelType> errorHandler(final ErrorHandler errorHandler) {
+   persistenceFX.errorHandler.set(errorHandler);
+   return this;
   }
 
-  public void setAutoCommit(final boolean autoCommit) {
-    this.autoCommitProperty().set(autoCommit);
+ }
+
+ @Override
+ public void propertyChanged(final Object containingModelEntity) {
+  if (autoCommit.get()) {
+   withErrorHandler(
+     containingModelEntity,
+     () -> persistenceProvider.propertyChanged(containingModelEntity));
+  } else {
+   events.add(() -> withErrorHandler(
+     containingModelEntity,
+     () -> persistenceProvider.propertyChanged(containingModelEntity)));
   }
+ }
 
-  private void initModel() {
-    model = persistenceProvider.load();
-    if (model == null) {
-      throw new BuildException("given persistence provider has to supply an initial model on load.");
-    }
-    new ModelWalker().walkModel(model, this);
-    autoCommit.addListener((ChangeListener<Boolean>) (observable, oldValue, newValue) -> {
-      if (newValue) {
-        commit();
-      }
-    });
+ @Override
+ public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
+   final List<?> removed) {
+  if (autoCommit.get()) {
+   withErrorHandler(
+     containingModelEntity,
+     () -> persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed));
+  } else {
+   events.add(() -> withErrorHandler(
+     containingModelEntity,
+     () -> persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed)));
   }
+ }
 
-  public ModelType getModel() {
-    return model;
+ private void withErrorHandler(final Object modelEntity, final Runnable event) {
+  try {
+   event.run();
+  } catch (final Exception saveEx) {
+   errorHandler.get().error(modelEntity, saveEx);
   }
+ }
 
-  public static class FluentBuilder<ModelType> {
+ public void commit() {
+  events.forEach(Runnable::run);
+  events.clear();
+ }
 
-    private final PersistenceFX<ModelType> persistenceFX;
+ public final ObjectProperty<ErrorHandler> errorHandlerProperty() {
+  return this.errorHandler;
+ }
 
-    public FluentBuilder(final PersistenceProvider<ModelType> persistenceProvider) {
-      this.persistenceFX = new PersistenceFX<ModelType>(persistenceProvider);
-    }
+ public final de.saxsys.persistencefx.error.ErrorHandler getErrorHandler() {
+  return this.errorHandlerProperty().get();
+ }
 
-    public FluentBuilder<ModelType> autoCommit() {
-      persistenceFX.setAutoCommit(true);
-      return this;
-    }
-
-    public PersistenceFX<ModelType> build() {
-      persistenceFX.initModel();
-      return persistenceFX;
-    }
-
-    public FluentBuilder<ModelType> errorHandler(final ErrorHandler errorHandler) {
-      persistenceFX.errorHandler.set(errorHandler);
-      return this;
-    }
-
-  }
-
-  @Override
-  public void propertyChanged(final Object containingModelEntity) {
-    if (autoCommit.get()) {
-      withErrorHandler(
-          containingModelEntity,
-          () -> persistenceProvider.propertyChanged(containingModelEntity));
-    } else {
-      events.add(() -> withErrorHandler(
-          containingModelEntity,
-          () -> persistenceProvider.propertyChanged(containingModelEntity)));
-    }
-  }
-
-  @Override
-  public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
-      final List<?> removed) {
-    if (autoCommit.get()) {
-      withErrorHandler(
-          containingModelEntity,
-          () -> persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed));
-    } else {
-      events.add(() -> withErrorHandler(
-          containingModelEntity,
-          () -> persistenceProvider.listContentChanged(containingModelEntity, changedList, added, removed)));
-    }
-  }
-
-  private void withErrorHandler(final Object modelEntity, final Runnable event) {
-    try {
-      event.run();
-    } catch (final Exception saveEx) {
-      errorHandler.get().error(modelEntity, saveEx);
-    }
-  }
-
-  public void commit() {
-    events.forEach(Runnable::run);
-    events.clear();
-  }
-
-  public final ObjectProperty<ErrorHandler> errorHandlerProperty() {
-    return this.errorHandler;
-  }
-
-  public final de.saxsys.persistencefx.error.ErrorHandler getErrorHandler() {
-    return this.errorHandlerProperty().get();
-  }
-
-  public final void setErrorHandler(final de.saxsys.persistencefx.error.ErrorHandler errorHandler) {
-    this.errorHandlerProperty().set(errorHandler);
-  }
+ public final void setErrorHandler(final de.saxsys.persistencefx.error.ErrorHandler errorHandler) {
+  this.errorHandlerProperty().set(errorHandler);
+ }
 
 }

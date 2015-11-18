@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import de.saxsys.persistencefx.error.ErrorHandler;
@@ -18,227 +19,186 @@ import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 public class PersistenceFXTest {
+ final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
+ final TestModel model = new TestModel();
 
-  @Test
-  public void propertyChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue() {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+ @Before
+ public void initMocks() {
+  when(persistenceProvider.load()).thenReturn(Collections.singletonList(model));
+ }
 
-    PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+ @Test
+ public void propertyChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue() {
+  PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
 
-    model.setStringProp("new");
+  model.setStringProp("new");
 
-    verify(persistenceProvider).propertyChanged(model);
-  }
+  verify(persistenceProvider).propertyChanged(model);
+ }
 
-  @Test
-  public void listChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue()
-      throws NoSuchFieldException, SecurityException {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+ @Test
+ public void listChangedEventsShouldBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsTrue()
+   throws NoSuchFieldException, SecurityException {
+  PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
 
-    PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+  final String newValue = "new";
+  model.getListProp().add(newValue);
 
-    final String newValue = "new";
-    model.getListProp().add(newValue);
+  verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
+    eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
 
-    verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
-        eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
+ }
 
-  }
+ @Test
+ public void propertyChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse() {
+  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-  @Test
-  public void propertyChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse() {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  model.setStringProp("new");
 
-    PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+  verify(persistenceProvider, times(0)).propertyChanged(model);
+ }
 
-    model.setStringProp("new");
+ @Test
+ public void listChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
+   throws NoSuchFieldException, SecurityException {
+  PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-    verify(persistenceProvider, times(0)).propertyChanged(model);
-  }
+  final String newValue = "new";
+  model.getListProp().add(newValue);
 
-  @Test
-  public void listChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
-      throws NoSuchFieldException, SecurityException {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  verify(persistenceProvider, times(0)).listContentChanged(same(model),
+    eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+    eq(Collections.emptyList()));
+ }
 
-    PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+ @Test
+ public void autoCommitStateShouldBeSwitchable() {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit()
+    .build();
 
-    final String newValue = "new";
-    model.getListProp().add(newValue);
+  model.setStringProp("new");
 
-    verify(persistenceProvider, times(0)).listContentChanged(same(model),
-        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
-        eq(Collections.emptyList()));
-  }
+  verify(persistenceProvider).propertyChanged(model);
 
-  @Test
-  public void autoCommitStateShouldBeSwitchable() {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  cut.setAutoCommit(false);
 
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit()
-        .build();
+  model.setStringProp("new2");
 
-    model.setStringProp("new");
+  verify(persistenceProvider, times(1)).propertyChanged(model);
+ }
 
-    verify(persistenceProvider).propertyChanged(model);
+ @Test
+ public void suspendedEventsShouldBeDelegatedToPersistenceProviderOnCommit()
+   throws NoSuchFieldException, SecurityException {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-    cut.setAutoCommit(false);
+  final String newValue = "new";
+  model.getListProp().add(newValue);
+  model.setStringProp("new");
 
-    model.setStringProp("new2");
+  verify(persistenceProvider, times(0)).propertyChanged(model);
+  verify(persistenceProvider, times(0)).listContentChanged(same(model),
+    eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+    eq(Collections.emptyList()));
 
-    verify(persistenceProvider, times(1)).propertyChanged(model);
-  }
+  cut.commit();
 
-  @Test
-  public void suspendedEventsShouldBeDelegatedToPersistenceProviderOnCommit()
-      throws NoSuchFieldException, SecurityException {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  verify(persistenceProvider).propertyChanged(model);
+  verify(persistenceProvider).listContentChanged(same(model),
+    eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
+    eq(Collections.emptyList()));
+ }
 
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+ @Test
+ public void secondCommitShouldNotFireOldEvents()
+   throws NoSuchFieldException, SecurityException {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-    final String newValue = "new";
-    model.getListProp().add(newValue);
-    model.setStringProp("new");
+  model.setStringProp("new");
 
-    verify(persistenceProvider, times(0)).propertyChanged(model);
-    verify(persistenceProvider, times(0)).listContentChanged(same(model),
-        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
-        eq(Collections.emptyList()));
+  verify(persistenceProvider, times(0)).propertyChanged(model);
 
-    cut.commit();
+  cut.commit();
+  cut.commit();
 
-    verify(persistenceProvider).propertyChanged(model);
-    verify(persistenceProvider).listContentChanged(same(model),
-        eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
-        eq(Collections.emptyList()));
-  }
+  verify(persistenceProvider).propertyChanged(model);
+ }
 
-  @Test
-  public void secondCommitShouldNotFireOldEvents()
-      throws NoSuchFieldException, SecurityException {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+ @Test
+ public void eventsShouldBeFiredWhenActivatingAutoCommit()
+   throws NoSuchFieldException, SecurityException {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+  model.setStringProp("new");
 
-    model.setStringProp("new");
+  verify(persistenceProvider, times(0)).propertyChanged(model);
 
-    verify(persistenceProvider, times(0)).propertyChanged(model);
+  cut.setAutoCommit(true);
 
-    cut.commit();
-    cut.commit();
+  verify(persistenceProvider).propertyChanged(model);
+ }
 
-    verify(persistenceProvider).propertyChanged(model);
-  }
+ @Test
+ public void errorsShouldBeDelegatedToErrorHandlerWhileCommiting()
+   throws NoSuchFieldException, SecurityException {
+  final ErrorHandler errorHandler = mock(ErrorHandler.class);
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
+    .errorHandler(errorHandler).build();
 
-  @Test
-  public void eventsShouldBeFiredWhenActivatingAutoCommit()
-      throws NoSuchFieldException, SecurityException {
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  final RuntimeException runEx = new RuntimeException("testEx");
+  doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
 
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+  model.setStringProp("new");
 
-    model.setStringProp("new");
+  cut.commit();
 
-    verify(persistenceProvider, times(0)).propertyChanged(model);
+  verify(errorHandler).error(same(model), same(runEx));
+ }
 
-    cut.setAutoCommit(true);
+ @Test
+ public void errorsShouldBeDelegatedToErrorHandlerOnAutoCommit()
+   throws NoSuchFieldException, SecurityException {
+  final ErrorHandler errorHandler = mock(ErrorHandler.class);
+  PersistenceFX.withPersistenceProvider(persistenceProvider)
+    .errorHandler(errorHandler).autoCommit().build();
 
-    verify(persistenceProvider).propertyChanged(model);
-  }
+  final RuntimeException runEx = new RuntimeException("testEx");
+  doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
 
-  @Test
-  public void errorsShouldBeDelegatedToErrorHandlerWhileCommiting()
-      throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  model.setStringProp("new");
 
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
-        .errorHandler(errorHandler).build();
+  verify(errorHandler).error(same(model), same(runEx));
+ }
 
-    final RuntimeException runEx = new RuntimeException("testEx");
-    doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
+ @Test
+ public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerWhileCommiting()
+   throws NoSuchFieldException, SecurityException {
+  final ErrorHandler errorHandler = mock(ErrorHandler.class);
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
+    .errorHandler(errorHandler).build();
 
-    model.setStringProp("new");
+  final RuntimeException runEx = new RuntimeException("testEx");
+  doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
 
-    cut.commit();
+  model.getListProp().add("new");
 
-    verify(errorHandler).error(same(model), same(runEx));
-  }
+  cut.commit();
 
-  @Test
-  public void errorsShouldBeDelegatedToErrorHandlerOnAutoCommit()
-      throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
+  verify(errorHandler).error(same(model), same(runEx));
+ }
 
-    PersistenceFX.withPersistenceProvider(persistenceProvider)
-        .errorHandler(errorHandler).autoCommit().build();
+ @Test
+ public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerOnAutoCommit()
+   throws NoSuchFieldException, SecurityException {
+  final ErrorHandler errorHandler = mock(ErrorHandler.class);
+  PersistenceFX.withPersistenceProvider(persistenceProvider)
+    .errorHandler(errorHandler).autoCommit().build();
 
-    final RuntimeException runEx = new RuntimeException("testEx");
-    doThrow(runEx).when(persistenceProvider).propertyChanged(same(model));
+  final RuntimeException runEx = new RuntimeException("testEx");
+  doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
 
-    model.setStringProp("new");
+  model.getListProp().add("new");
 
-    verify(errorHandler).error(same(model), same(runEx));
-  }
-
-  @Test
-  public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerWhileCommiting()
-      throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
-
-    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
-        .errorHandler(errorHandler).build();
-
-    final RuntimeException runEx = new RuntimeException("testEx");
-    doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
-
-    model.getListProp().add("new");
-
-    cut.commit();
-
-    verify(errorHandler).error(same(model), same(runEx));
-  }
-
-  @Test
-  public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerOnAutoCommit()
-      throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
-    final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
-    final TestModel model = new TestModel();
-    when(persistenceProvider.load()).thenReturn(model);
-
-    PersistenceFX.withPersistenceProvider(persistenceProvider)
-        .errorHandler(errorHandler).autoCommit().build();
-
-    final RuntimeException runEx = new RuntimeException("testEx");
-    doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
-
-    model.getListProp().add("new");
-
-    verify(errorHandler).error(same(model), same(runEx));
-  }
+  verify(errorHandler).error(same(model), same(runEx));
+ }
 }
