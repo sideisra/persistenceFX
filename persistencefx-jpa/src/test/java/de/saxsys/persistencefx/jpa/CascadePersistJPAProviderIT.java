@@ -14,16 +14,20 @@ public class CascadePersistJPAProviderIT {
 
  @Test
  public void modelRootsShouldBeSavedAndLoaded() {
+  System.setProperty("derby.stream.error.file", "target/derby.log");
+
   final CascadePersistJPAProvider<Manufacturer> cutToSave = new CascadePersistJPAProvider<>("test", Manufacturer.class);
   final PersistenceFX<Manufacturer> persistenceFXToSave = PersistenceFX
     .withPersistenceProvider(cutToSave)
     .autoCommit()
     .build();
   final ObservableList<Manufacturer> modelRootsToSave = persistenceFXToSave.getModelRoots();
-  final Manufacturer manufacturerToSave1 = new Manufacturer("Audi");
-  manufacturerToSave1.getCarsObservable().add(new Car("A3"));
-  modelRootsToSave.add(manufacturerToSave1);
-  manufacturerToSave1.getCarsObservable().add(new Car("A4"));
+  final Manufacturer manufacturerToSave = new Manufacturer("Audi");
+  manufacturerToSave.getCarsObservable().add(new Car("A3"));
+  modelRootsToSave.add(manufacturerToSave);
+  manufacturerToSave.getCarsObservable().add(new Car("A4"));
+
+  assertThat(manufacturerToSave.getCarsObservable()).hasSize(2);
 
   final CascadePersistJPAProvider<Manufacturer> cutToLoad = new CascadePersistJPAProvider<>("test", Manufacturer.class);
   final PersistenceFX<Manufacturer> persistenceFXToLoad = PersistenceFX
@@ -33,20 +37,12 @@ public class CascadePersistJPAProviderIT {
   final ObservableList<Manufacturer> loadedModelRoots = persistenceFXToLoad.getModelRoots();
   assertThat(loadedModelRoots).hasSize(1);
   final Manufacturer loadedManufacturer = loadedModelRoots.get(0);
-  assertThat(loadedManufacturer.getName()).isEqualTo(manufacturerToSave1.getName());
-
-  loadedManufacturer.setName("new name");
-
-  final CascadePersistJPAProvider<Manufacturer> cutToLoad2 = new CascadePersistJPAProvider<>("test",
-    Manufacturer.class);
-  final PersistenceFX<Manufacturer> persistenceFXToLoad2 = PersistenceFX
-    .withPersistenceProvider(cutToLoad2)
-    .autoCommit()
-    .build();
-  final ObservableList<Manufacturer> loadedModelRoots2 = persistenceFXToLoad2.getModelRoots();
-  assertThat(loadedModelRoots2).hasSize(1);
-  final Manufacturer loadedManufacturer2 = loadedModelRoots2.get(0);
-  assertThat(loadedManufacturer2.getName()).isEqualTo("new name");
+  assertThat(loadedManufacturer.getName()).isEqualTo(manufacturerToSave.getName());
+  assertThat(loadedManufacturer.getCarsObservable()).hasSameSizeAs(manufacturerToSave.getCarsObservable());
+  assertThat(loadedManufacturer.getCarsObservable().get(0).getName())
+    .isEqualTo(manufacturerToSave.getCarsObservable().get(0).getName());
+  assertThat(loadedManufacturer.getCarsObservable().get(1).getName())
+    .isEqualTo(manufacturerToSave.getCarsObservable().get(1).getName());
  }
 
 }

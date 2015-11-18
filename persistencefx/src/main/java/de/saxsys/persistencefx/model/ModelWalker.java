@@ -21,6 +21,7 @@ public class ModelWalker {
   modelRoots.addListener((ListChangeListener<Object>) c -> {
    while (c.next()) {
     final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+    added.forEach(newModelRoot -> walkModel(newModelRoot, modelListener));
     final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
     modelListener.modelRootListChanged(added, removed);
    }
@@ -34,14 +35,16 @@ public class ModelWalker {
    try {
     field.setAccessible(true);
     final Object fieldInst = field.get(model);
-    if (fieldInst instanceof ObservableValue) {
-     listenToObservableValue(model, modelListener, fieldInst);
-     propsFound.set(true);
-    } else if (fieldInst instanceof ObservableList) {
-     listenToObservableList(model, modelListener, field, fieldInst);
-     propsFound.set(true);
-    } else {
-     nonProps.add(fieldInst);
+    if (fieldInst != null) {
+     if (fieldInst instanceof ObservableValue) {
+      listenToObservableValue(model, modelListener, fieldInst);
+      propsFound.set(true);
+     } else if (fieldInst instanceof ObservableList) {
+      listenToObservableList(model, modelListener, field, fieldInst);
+      propsFound.set(true);
+     } else {
+      nonProps.add(fieldInst);
+     }
     }
    } catch (final Exception escanEx) {
     throw new RuntimeException("Error while scanning model.", escanEx);

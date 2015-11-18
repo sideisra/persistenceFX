@@ -212,4 +212,15 @@ public class PersistenceFXTest {
   verify(persistenceProvider).modelRootListChanged(eq(Collections.singletonList(newModelRoot)),
     eq(Collections.emptyList()));
  }
+
+ @Test
+ public void newRootElementsAreObservedAsWell() {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+
+  final TestModel newModelRoot = new TestModel();
+  cut.getModelRoots().add(newModelRoot);
+  newModelRoot.setStringProp("new");
+
+  verify(persistenceProvider).propertyChanged(newModelRoot);
+ }
 }

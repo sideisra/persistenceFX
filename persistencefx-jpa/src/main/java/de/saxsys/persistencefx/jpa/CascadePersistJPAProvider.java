@@ -20,6 +20,7 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
 public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider<ModelType> {
 
  private final EntityManagerFactory factory;
+ private EntityManager em;
  private final Class<ModelType> modelTypeClass;
 
  public CascadePersistJPAProvider(final String persistenceUnitName, final Class<ModelType> modelTypeClass) {
@@ -29,15 +30,20 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
 
  @Override
  public List<ModelType> load() {
-  final EntityManager em = factory.createEntityManager();
+  em = factory.createEntityManager();
+  em.getTransaction().begin();
   try {
    final String query = "select m from " + modelTypeClass.getSimpleName() + " m";
    final Query q = em.createQuery(query);
    final List<ModelType> manufacturer = q.getResultList();
    return manufacturer;
   } finally {
-   em.close();
+   em.getTransaction().commit();
   }
+ }
+
+ public void close() {
+  em.close();
  }
 
  @Override
@@ -66,13 +72,13 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
  }
 
  private void inTransaction(final Consumer<EntityManager> command) {
-  final EntityManager em = factory.createEntityManager();
+  em.getTransaction().begin();
   try {
-   em.getTransaction().begin();
    command.accept(em);
    em.getTransaction().commit();
-  } finally {
-   em.close();
+  } catch (final Exception e) {
+   em.getTransaction().rollback();
+   throw new RuntimeException(e);
   }
  }
 

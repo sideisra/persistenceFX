@@ -14,6 +14,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -30,7 +32,7 @@ public class Manufacturer {
  @Transient
  private List<Car> cars = new LinkedList<>();
  @Transient
- private ObservableList<Car> observableCars = FXCollections.observableList(cars);
+ private final ListProperty<Car> observableCars = new SimpleListProperty<>(FXCollections.observableArrayList());
 
  public Manufacturer() {
  }
@@ -73,6 +75,6 @@ public class Manufacturer {
 
  private void setCars(final List<Car> cars) {
   this.cars = cars;
-  this.observableCars = FXCollections.observableList(cars);
+  this.observableCars.set(FXCollections.observableList(cars));
  }
 }
