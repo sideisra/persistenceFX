@@ -31,8 +31,7 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
  public List<ModelType> load() {
   final EntityManager em = factory.createEntityManager();
   try {
-   final String query = "select m from " + modelTypeClass.getName() + " m";
-   System.out.println(query);
+   final String query = "select m from " + modelTypeClass.getSimpleName() + " m";
    final Query q = em.createQuery(query);
    final List<ModelType> manufacturer = q.getResultList();
    return manufacturer;
@@ -53,7 +52,13 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
  }
 
  public void persist(final Object containingModelEntity) {
-  inTransaction(em -> em.persist(containingModelEntity));
+  inTransaction(em -> {
+   if (em.contains(containingModelEntity)) {
+    em.merge(containingModelEntity);
+   } else {
+    em.persist(containingModelEntity);
+   }
+  });
  }
 
  public void deleteManufacturer(final Object containingModelEntity) {
@@ -73,7 +78,7 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
 
  @Override
  public void modelRootListChanged(final List<?> added, final List<?> removed) {
-  // TODO Auto-generated method stub
-
+  added.forEach(this::persist);
+  removed.forEach(this::persist);
  }
 }

@@ -1,4 +1,4 @@
-package de.saxsys.persistencefx.persistence;
+package de.saxsys.persistencefx.jaxb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
