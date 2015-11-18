@@ -18,6 +18,13 @@ public class ModelWalker {
 
  public void walkModelRoots(final ObservableList<?> modelRoots, final ModelListener modelListener) {
   modelRoots.forEach(modelRoot -> walkModel(modelRoot, modelListener));
+  modelRoots.addListener((ListChangeListener<Object>) c -> {
+   while (c.next()) {
+    final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+    final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
+    modelListener.modelRootListChanged(added, removed);
+   }
+  });
  }
 
  private void walkModel(final Object model, final ModelListener modelListener) {

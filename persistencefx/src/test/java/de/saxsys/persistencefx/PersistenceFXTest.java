@@ -201,4 +201,15 @@ public class PersistenceFXTest {
 
   verify(errorHandler).error(same(model), same(runEx));
  }
+
+ @Test
+ public void changesOfRootListShouldFireEvent() {
+  final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
+
+  final TestModel newModelRoot = new TestModel();
+  cut.getModelRoots().add(newModelRoot);
+
+  verify(persistenceProvider).modelRootListChanged(eq(Collections.singletonList(newModelRoot)),
+    eq(Collections.emptyList()));
+ }
 }

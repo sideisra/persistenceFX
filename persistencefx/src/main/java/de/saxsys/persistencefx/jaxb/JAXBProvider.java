@@ -58,4 +58,9 @@ public class JAXBProvider<ModelType> implements PersistenceProvider<ModelType> {
    throw new RuntimeException(loadEx);
   }
  }
+
+ @Override
+ public void modelRootListChanged(final List<?> added, final List<?> removed) {
+  throw new UnsupportedOperationException("Management of multiple root model object is not supported at the moment.");
+ }
 }

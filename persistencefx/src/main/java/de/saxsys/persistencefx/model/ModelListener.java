@@ -4,8 +4,9 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 public interface ModelListener {
-	void propertyChanged(Object containingModelEntity);
+ void propertyChanged(Object containingModelEntity);
 
-	void listContentChanged(Object containingModelEntity, Field changedList, List<?> added, List<?> removed);
+ void listContentChanged(Object containingModelEntity, Field changedList, List<?> added, List<?> removed);
 
+ void modelRootListChanged(List<?> added, List<?> removed);
 }

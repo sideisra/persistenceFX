@@ -70,4 +70,10 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
    em.close();
   }
  }
+
+ @Override
+ public void modelRootListChanged(final List<?> added, final List<?> removed) {
+  // TODO Auto-generated method stub
+
+ }
 }

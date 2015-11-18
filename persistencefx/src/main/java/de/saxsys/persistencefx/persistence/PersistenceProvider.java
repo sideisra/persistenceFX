@@ -11,4 +11,5 @@ public interface PersistenceProvider<ModelType> {
 
  void listContentChanged(Object containingModelEntity, Field changedList, List<?> added, List<?> removed);
 
+ void modelRootListChanged(List<?> added, List<?> removed);
 }

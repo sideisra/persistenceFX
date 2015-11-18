@@ -147,4 +147,9 @@ public class PersistenceFX<ModelRootType> implements ModelListener {
   this.errorHandlerProperty().set(errorHandler);
  }
 
+ @Override
+ public void modelRootListChanged(final List<?> added, final List<?> removed) {
+  persistenceProvider.modelRootListChanged(added, removed);
+ }
+
 }
