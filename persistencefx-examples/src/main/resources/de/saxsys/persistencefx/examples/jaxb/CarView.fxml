@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.saxsys.persistencefx.examples.jaxb.CarView">
+   <children>
+      <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+         <children>
+            <ListView fx:id="lvManufacturer" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+            <TextField fx:id="txtNewManufacturerName" promptText="Name" />
+            <HBox VBox.vgrow="NEVER">
+               <children>
+                  <Button fx:id="btnAddManufacturer" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#addManufacturer" text="+" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="btnRemoveManufacturer" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#removeManufacturer" text="-" HBox.hgrow="ALWAYS" />
+               </children></HBox>
+         </children>
+      </VBox>
+      <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+         <children>
+            <ListView fx:id="lvCars" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+            <TextField fx:id="txtNewCarName" promptText="Name" />
+            <HBox VBox.vgrow="NEVER">
+               <children>
+                  <Button fx:id="btnAddCar" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#addCar" text="+" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="btnRemove" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#removeCar" text="-" HBox.hgrow="ALWAYS" />
+               </children></HBox>
+         </children>
+      </VBox>
+   </children>
+</HBox>
