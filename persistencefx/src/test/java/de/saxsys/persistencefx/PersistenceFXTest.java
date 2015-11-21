@@ -42,7 +42,7 @@ public class PersistenceFXTest {
   PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit().build();
 
   final String newValue = "new";
-  model.getListProp().add(newValue);
+  model.getObsList().add(newValue);
 
   verify(persistenceProvider).listContentChanged(same(model), eq(TestModel.class.getDeclaredField("listProp")),
     eq(Collections.singletonList(newValue)), eq(Collections.emptyList()));
@@ -64,7 +64,7 @@ public class PersistenceFXTest {
   PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
   final String newValue = "new";
-  model.getListProp().add(newValue);
+  model.getObsList().add(newValue);
 
   verify(persistenceProvider, times(0)).listContentChanged(same(model),
     eq(TestModel.class.getDeclaredField("listProp")), eq(Collections.singletonList(newValue)),
@@ -93,7 +93,7 @@ public class PersistenceFXTest {
   final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
 
   final String newValue = "new";
-  model.getListProp().add(newValue);
+  model.getObsList().add(newValue);
   model.setStringProp("new");
 
   verify(persistenceProvider, times(0)).propertyChanged(model);
@@ -180,7 +180,7 @@ public class PersistenceFXTest {
   final RuntimeException runEx = new RuntimeException("testEx");
   doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
 
-  model.getListProp().add("new");
+  model.getObsList().add("new");
 
   cut.commit();
 
@@ -197,7 +197,7 @@ public class PersistenceFXTest {
   final RuntimeException runEx = new RuntimeException("testEx");
   doThrow(runEx).when(persistenceProvider).listContentChanged(any(), any(), any(), any());
 
-  model.getListProp().add("new");
+  model.getObsList().add("new");
 
   verify(errorHandler).error(same(model), same(runEx));
  }

@@ -17,50 +17,50 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
  */
 public class JAXBProvider<ModelType> implements PersistenceProvider<ModelType> {
 
- private final JAXBContext context;
- private final Path xmlPath;
- private ModelType model;
+  private final JAXBContext context;
+  private final Path xmlPath;
+  private ModelType model;
 
- public JAXBProvider(final Path xmlPath, final ModelType initialModel) throws JAXBException {
-  super();
-  this.xmlPath = xmlPath;
-  context = JAXBContext.newInstance(initialModel.getClass());
-  model = initialModel;
- }
-
- @Override
- public List<ModelType> load() {
-  try {
-   if (Files.exists(xmlPath)) {
-    model = (ModelType) context.createUnmarshaller().unmarshal(xmlPath.toFile());
-   }
-   return Collections.singletonList(model);
-  } catch (final JAXBException loadEx) {
-   throw new RuntimeException(loadEx);
+  public JAXBProvider(final Path xmlPath, final ModelType initialModel) throws JAXBException {
+    super();
+    this.xmlPath = xmlPath;
+    context = JAXBContext.newInstance(initialModel.getClass());
+    model = initialModel;
   }
- }
 
- @Override
- public void propertyChanged(final Object containingModelEntity) {
-  save();
- }
-
- @Override
- public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
-   final List<?> removed) {
-  save();
- }
-
- private void save() {
-  try {
-   context.createMarshaller().marshal(model, xmlPath.toFile());
-  } catch (final JAXBException loadEx) {
-   throw new RuntimeException(loadEx);
+  @Override
+  public List<ModelType> load() {
+    try {
+      if (Files.exists(xmlPath)) {
+        model = (ModelType) context.createUnmarshaller().unmarshal(xmlPath.toFile());
+      }
+      return Collections.singletonList(model);
+    } catch (final JAXBException loadEx) {
+      throw new RuntimeException(loadEx);
+    }
   }
- }
 
- @Override
- public void modelRootListChanged(final List<?> added, final List<?> removed) {
-  throw new UnsupportedOperationException("Management of multiple root model object is not supported at the moment.");
- }
+  @Override
+  public void propertyChanged(final Object containingModelEntity) {
+    save();
+  }
+
+  @Override
+  public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
+      final List<?> removed) {
+    save();
+  }
+
+  private void save() {
+    try {
+      context.createMarshaller().marshal(model, xmlPath.toFile());
+    } catch (final JAXBException loadEx) {
+      throw new RuntimeException(loadEx);
+    }
+  }
+
+  @Override
+  public void modelRootListChanged(final List<?> added, final List<?> removed) {
+    throw new UnsupportedOperationException("Management of multiple root model object is not supported at the moment.");
+  }
 }

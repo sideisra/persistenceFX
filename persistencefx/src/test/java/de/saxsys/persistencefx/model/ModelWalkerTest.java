@@ -36,16 +36,16 @@ public class ModelWalkerTest {
     final ModelWalker cut = new ModelWalker();
     final TestModel testModel = new TestModel();
     final String toBeRemoved = "toBeRemoved";
-    testModel.getListProp().add(toBeRemoved);
+    testModel.getObsList().add(toBeRemoved);
     final ModelListener testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
-    testModel.getListProp().add("new");
-    testModel.getListProp().remove(toBeRemoved);
+    testModel.getObsList().add("new");
+    testModel.getObsList().remove(toBeRemoved);
 
-    verify(testListener).listContentChanged(same(testModel), eq(TestModel.class.getDeclaredField("listProp")),
+    verify(testListener).listContentChanged(same(testModel), eq(TestModel.class.getDeclaredField("obsList")),
         eq(Arrays.asList("new")), eq(Collections.emptyList()));
-    verify(testListener).listContentChanged(same(testModel), eq(TestModel.class.getDeclaredField("listProp")),
+    verify(testListener).listContentChanged(same(testModel), eq(TestModel.class.getDeclaredField("obsList")),
         eq(Collections.emptyList()), eq(Arrays.asList(toBeRemoved)));
   }
 
@@ -81,6 +81,23 @@ public class ModelWalkerTest {
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     verifyZeroInteractions(testListener);
+  }
+
+  @Test
+  public void shouldListenToPropAndListChangesOfListProperties() throws NoSuchFieldException, SecurityException {
+    final ModelWalker cut = new ModelWalker();
+    final TestModel testModel = new TestModel();
+    final ModelListener testListener = mock(ModelListener.class);
+    cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
+
+    testModel.getListProp().add("new");
+
+    verify(testListener).listContentChanged(same(testModel), eq(TestModel.class.getDeclaredField("listProp")),
+        eq(Arrays.asList("new")), eq(Collections.emptyList()));
+
+    testModel.getListProp().set(FXCollections.observableArrayList());
+
+    verify(testListener).propertyChanged(same(testModel));
   }
 
   public static class TestTopLevelModel {

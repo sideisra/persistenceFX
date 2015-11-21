@@ -16,63 +16,74 @@ import javafx.collections.ObservableList;
 
 public class ModelWalker {
 
- public void walkModelRoots(final ObservableList<?> modelRoots, final ModelListener modelListener) {
-  modelRoots.forEach(modelRoot -> walkModel(modelRoot, modelListener));
-  modelRoots.addListener((ListChangeListener<Object>) c -> {
-   while (c.next()) {
-    final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
-    added.forEach(newModelRoot -> walkModel(newModelRoot, modelListener));
-    final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
-    modelListener.modelRootListChanged(added, removed);
-   }
-  });
- }
-
- private void walkModel(final Object model, final ModelListener modelListener) {
-  final List<Object> nonProps = new LinkedList<>();
-  final BooleanProperty propsFound = new SimpleBooleanProperty();
-  Arrays.stream(model.getClass().getDeclaredFields()).forEach(field -> {
-   try {
-    field.setAccessible(true);
-    final Object fieldInst = field.get(model);
-    if (fieldInst != null) {
-     if (fieldInst instanceof ObservableValue) {
-      listenToObservableValue(model, modelListener, fieldInst);
-      propsFound.set(true);
-     } else if (fieldInst instanceof ObservableList) {
-      listenToObservableList(model, modelListener, field, fieldInst);
-      propsFound.set(true);
-     } else {
-      nonProps.add(fieldInst);
-     }
-    }
-   } catch (final Exception escanEx) {
-    throw new RuntimeException("Error while scanning model.", escanEx);
-   }
-  });
-  // we assume that a class without properties marks the border of the model
-  // so no further decent if no prop was found
-  if (propsFound.get()) {
-   nonProps.forEach(nonProp -> walkModel(nonProp, modelListener));
+  public void walkModelRoots(final ObservableList<?> modelRoots, final ModelListener modelListener) {
+    modelRoots.forEach(modelRoot -> walkModel(modelRoot, modelListener));
+    modelRoots.addListener((ListChangeListener<Object>) c -> {
+      while (c.next()) {
+        final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+        added.forEach(newModelRoot -> walkModel(newModelRoot, modelListener));
+        final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
+        modelListener.modelRootListChanged(added, removed);
+      }
+    });
   }
- }
 
- @SuppressWarnings("unchecked")
- private void listenToObservableList(final Object model, final ModelListener modelListener, final Field field,
-   final Object fieldInst) {
-  ((ObservableList<? extends Object>) fieldInst).addListener((ListChangeListener<? super Object>) (c) -> {
-   while (c.next()) {
-    final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
-    final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
-    modelListener.listContentChanged(model, field, added, removed);
-   }
-  });
- }
+  private void walkModel(final Object model, final ModelListener modelListener) {
+    final List<Object> nonProps = new LinkedList<>();
+    final BooleanProperty propsFound = new SimpleBooleanProperty();
+    Arrays.stream(model.getClass().getDeclaredFields()).forEach(field -> {
+      try {
+        field.setAccessible(true);
+        final Object fieldInst = field.get(model);
+        if (fieldInst != null) {
+          boolean isObservable = false;
+          if (fieldInst instanceof ObservableValue) {
+            listenToObservableValue(model, modelListener, fieldInst);
+            propsFound.set(true);
+            isObservable = true;
+          }
+          if (fieldInst instanceof ObservableList) {
+            listenToObservableList(model, modelListener, field, fieldInst);
+            propsFound.set(true);
+            isObservable = true;
+          }
+          if (!isObservable) {
+            nonProps.add(fieldInst);
+          }
+        }
+      } catch (final Exception escanEx) {
+        throw new RuntimeException("Error while scanning model.", escanEx);
+      }
+    });
+    // we assume that a class without properties marks the border of the model
+    // so no further decent if no prop was found
+    if (propsFound.get()) {
+      nonProps.forEach(nonProp -> walkModel(nonProp, modelListener));
+    }
+  }
 
- @SuppressWarnings("unchecked")
- private void listenToObservableValue(final Object model, final ModelListener modelListener, final Object fieldInst) {
-  ((ObservableValue<? extends Object>) fieldInst).addListener(
-    (ChangeListener<? super Object>) (observable, oldValue, newValue) -> modelListener.propertyChanged(model));
- }
+  @SuppressWarnings("unchecked")
+  private void listenToObservableList(final Object model, final ModelListener modelListener, final Field field,
+      final Object fieldInst) {
+    ((ObservableList<? extends Object>) fieldInst).addListener((ListChangeListener<? super Object>) (c) -> {
+      while (c.next()) {
+        final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+        final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
+        modelListener.listContentChanged(model, field, added, removed);
+      }
+    });
+  }
+
+  @SuppressWarnings("unchecked")
+  private void listenToObservableValue(final Object model, final ModelListener modelListener, final Object fieldInst) {
+    ((ObservableValue<? extends Object>) fieldInst).addListener(
+        (ChangeListener<? super Object>) (observable, oldValue, newValue) -> {
+          if (oldValue != newValue) {
+            // list properties fire a change event when list content is changed
+            // but lists are the same to we ignore changes without change
+            modelListener.propertyChanged(model);
+          }
+        });
+  }
 
 }
