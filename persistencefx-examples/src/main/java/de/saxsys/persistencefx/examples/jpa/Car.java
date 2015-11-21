@@ -1,4 +1,4 @@
-package de.saxsys.persistencefx.jpa;
+package de.saxsys.persistencefx.examples.jpa;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;

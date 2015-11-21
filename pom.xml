@@ -8,6 +8,7 @@
  <modules>
   <module>persistencefx</module>
   <module>persistencefx-jpa</module>
+  <module>persistencefx-examples</module>
  </modules>
  <properties>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,11 +18,33 @@
  <prerequisites>
   <maven>3.0</maven>
  </prerequisites>
+ <dependencies>
+  <dependency>
+   <groupId>org.slf4j</groupId>
+   <artifactId>slf4j-api</artifactId>
+   <version>1.7.13</version>
+  </dependency>
+  <dependency>
+   <groupId>org.slf4j</groupId>
+   <artifactId>slf4j-jdk14</artifactId>
+  </dependency>
+ </dependencies>
  <dependencyManagement>
   <dependencies>
    <dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-jdk14</artifactId>
+    <version>1.7.13</version>
+    <scope>test</scope>
+   </dependency>
+   <dependency>
     <groupId>de.saxsys</groupId>
     <artifactId>persistencefx</artifactId>
+    <version>${project.version}</version>
+   </dependency>
+   <dependency>
+    <groupId>de.saxsys</groupId>
+    <artifactId>persistencefx-jpa</artifactId>
     <version>${project.version}</version>
    </dependency>
    <dependency>
@@ -52,13 +75,11 @@
     <groupId>org.apache.derby</groupId>
     <artifactId>derby</artifactId>
     <version>10.12.1.1</version>
-    <scope>test</scope>
    </dependency>
    <dependency>
     <groupId>org.eclipse.persistence</groupId>
     <artifactId>eclipselink</artifactId>
     <version>2.6.0</version>
-    <scope>test</scope>
    </dependency>
   </dependencies>
  </dependencyManagement>

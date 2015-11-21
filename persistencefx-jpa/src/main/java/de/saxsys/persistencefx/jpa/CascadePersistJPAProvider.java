@@ -10,6 +10,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 /**
@@ -19,72 +22,79 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
  */
 public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider<ModelType> {
 
- private final EntityManagerFactory factory;
- private EntityManager em;
- private final Class<ModelType> modelTypeClass;
+  private static final Logger LOG = LoggerFactory.getLogger(CascadePersistJPAProvider.class);
 
- public CascadePersistJPAProvider(final String persistenceUnitName, final Class<ModelType> modelTypeClass) {
-  factory = Persistence.createEntityManagerFactory(persistenceUnitName);
-  this.modelTypeClass = modelTypeClass;
- }
+  private final EntityManagerFactory factory;
+  private EntityManager em;
+  private final Class<ModelType> modelTypeClass;
 
- @Override
- public List<ModelType> load() {
-  em = factory.createEntityManager();
-  em.getTransaction().begin();
-  try {
-   final String query = "select m from " + modelTypeClass.getSimpleName() + " m";
-   final Query q = em.createQuery(query);
-   final List<ModelType> manufacturer = q.getResultList();
-   return manufacturer;
-  } finally {
-   em.getTransaction().commit();
+  public CascadePersistJPAProvider(final String persistenceUnitName, final Class<ModelType> modelTypeClass) {
+    factory = Persistence.createEntityManagerFactory(persistenceUnitName);
+    this.modelTypeClass = modelTypeClass;
   }
- }
 
- public void close() {
-  em.close();
- }
-
- @Override
- public void propertyChanged(final Object containingModelEntity) {
-  persist(containingModelEntity);
- }
-
- @Override
- public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
-   final List<?> removed) {
-  persist(containingModelEntity);
- }
-
- public void persist(final Object containingModelEntity) {
-  inTransaction(em -> {
-   if (em.contains(containingModelEntity)) {
-    em.merge(containingModelEntity);
-   } else {
-    em.persist(containingModelEntity);
-   }
-  });
- }
-
- public void deleteManufacturer(final Object containingModelEntity) {
-  inTransaction(em -> em.remove(em.merge(containingModelEntity)));
- }
-
- private void inTransaction(final Consumer<EntityManager> command) {
-  em.getTransaction().begin();
-  try {
-   command.accept(em);
-   em.getTransaction().commit();
-  } catch (final Exception e) {
-   em.getTransaction().rollback();
-   throw new RuntimeException(e);
+  @Override
+  public List<ModelType> load() {
+    em = factory.createEntityManager();
+    em.getTransaction().begin();
+    try {
+      final String query = "select m from " + modelTypeClass.getSimpleName() + " m";
+      final Query q = em.createQuery(query);
+      final List<ModelType> manufacturer = q.getResultList();
+      return manufacturer;
+    } finally {
+      em.getTransaction().commit();
+    }
   }
- }
 
- @Override
- public void modelRootListChanged(final List<?> added, final List<?> removed) {
-  added.forEach(this::persist);
-  removed.forEach(this::persist);
- }
+  public void close() {
+    em.close();
+  }
+
+  @Override
+  public void propertyChanged(final Object containingModelEntity) {
+    persist(containingModelEntity);
+  }
+
+  @Override
+  public void listContentChanged(final Object containingModelEntity, final Field changedList, final List<?> added,
+      final List<?> removed) {
+    persist(containingModelEntity);
+  }
+
+  public void persist(final Object containingModelEntity) {
+    inTransaction(em -> {
+      if (em.contains(containingModelEntity)) {
+        em.merge(containingModelEntity);
+      } else {
+        em.persist(containingModelEntity);
+      }
+    });
+  }
+
+  public void deleteManufacturer(final Object containingModelEntity) {
+    inTransaction(em -> em.remove(em.merge(containingModelEntity)));
+  }
+
+  private void inTransaction(final Consumer<EntityManager> command) {
+    if (em.getTransaction().isActive()) {
+      LOG.debug("Ignoring event as transaction is already active.");
+    } else {
+      em.getTransaction().begin();
+      try {
+        command.accept(em);
+        em.getTransaction().commit();
+      } catch (final Exception e) {
+        LOG.error("", e);
+        em.getTransaction().rollback();
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  @Override
+  public void modelRootListChanged(final List<?> added, final List<?> removed) {
+    added.forEach(this::persist);
+    removed.forEach(this::persist);
+  }
 }
