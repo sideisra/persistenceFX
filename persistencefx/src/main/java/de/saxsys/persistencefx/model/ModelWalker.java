@@ -65,13 +65,16 @@ public class ModelWalker {
   @SuppressWarnings("unchecked")
   private void listenToObservableList(final Object model, final ModelListener modelListener, final Field field,
       final Object fieldInst) {
-    ((ObservableList<? extends Object>) fieldInst).addListener((ListChangeListener<? super Object>) (c) -> {
+    final ObservableList<? extends Object> obsList = (ObservableList<? extends Object>) fieldInst;
+    obsList.addListener((ListChangeListener<? super Object>) (c) -> {
       while (c.next()) {
         final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+        added.forEach(addedEntry -> walkModel(addedEntry, modelListener));
         final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
         modelListener.listContentChanged(model, field, added, removed);
       }
     });
+    obsList.forEach(entry -> walkModel(entry, modelListener));
   }
 
   @SuppressWarnings("unchecked")

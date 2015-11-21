@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.model.testdata.TestModelWithNullValues;
+import de.saxsys.persistencefx.model.testdata.TestModelWithProps;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -98,6 +99,34 @@ public class ModelWalkerTest {
     testModel.getListProp().set(FXCollections.observableArrayList());
 
     verify(testListener).propertyChanged(same(testModel));
+  }
+
+  @Test
+  public void shouldListenToPropsInListEntries() {
+    final ModelWalker cut = new ModelWalker();
+    final TestModel testModel = new TestModel();
+    final TestModelWithProps testModelWithProps = new TestModelWithProps();
+    testModel.getObsListWithProps().add(testModelWithProps);
+    final ModelListener testListener = mock(ModelListener.class);
+    cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
+
+    testModelWithProps.setStringProp("new");
+
+    verify(testListener).propertyChanged(same(testModelWithProps));
+  }
+
+  @Test
+  public void shouldListenToPropsInNewlyAddedListEntries() {
+    final ModelWalker cut = new ModelWalker();
+    final TestModel testModel = new TestModel();
+    final ModelListener testListener = mock(ModelListener.class);
+    cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
+
+    final TestModelWithProps testModelWithProps = new TestModelWithProps();
+    testModel.getObsListWithProps().add(testModelWithProps);
+    testModelWithProps.setStringProp("new");
+
+    verify(testListener).propertyChanged(same(testModelWithProps));
   }
 
   public static class TestTopLevelModel {

@@ -5,23 +5,17 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 @XmlRootElement(name = "manufacurers")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class ManufacturerList {
 
-  private final ListProperty<Manufacturer> manufacturers = new SimpleListProperty<>(
-      FXCollections.observableArrayList());
-
-  public final ListProperty<Manufacturer> manufacturersProperty() {
-    return this.manufacturers;
-  }
+  private final ObservableList<Manufacturer> manufacturers = FXCollections.observableArrayList();
 
   @XmlElement(name = "manufacturer")
-  public ListProperty<Manufacturer> getManufacturers() {
+  public ObservableList<Manufacturer> getManufacturers() {
     return manufacturers;
   }
 

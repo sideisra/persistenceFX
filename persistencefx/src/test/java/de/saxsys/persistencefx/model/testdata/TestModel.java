@@ -3,11 +3,13 @@ package de.saxsys.persistencefx.model.testdata;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class TestModel {
   private final TestObsValue stringProp = new TestObsValue();
   private final TestObsList obsList = new TestObsList();
   private final ListProperty<String> listProp = new SimpleListProperty<>(FXCollections.observableArrayList());
+  private final ObservableList<TestModelWithProps> obsListWithProps = FXCollections.observableArrayList();
   private final TestModelWithoutProps withoutProps = new TestModelWithoutProps();
 
   public final TestObsValue stringPropProperty() {
@@ -32,6 +34,10 @@ public class TestModel {
 
   public ListProperty<String> getListProp() {
     return listProp;
+  }
+
+  public ObservableList<TestModelWithProps> getObsListWithProps() {
+    return obsListWithProps;
   }
 
 }

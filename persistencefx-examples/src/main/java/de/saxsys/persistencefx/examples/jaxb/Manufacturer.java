@@ -6,18 +6,17 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 @XmlRootElement(name = "manufacturer")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Manufacturer {
 
   private final StringProperty name = new SimpleStringProperty();
-  private final ListProperty<Car> observableCars = new SimpleListProperty<>(FXCollections.observableArrayList());
+  private final ObservableList<Car> observableCars = FXCollections.observableArrayList();
 
   public Manufacturer() {
   }
@@ -40,7 +39,7 @@ public class Manufacturer {
   }
 
   @XmlElement(name = "car")
-  public ListProperty<Car> getCars() {
+  public ObservableList<Car> getCars() {
     return observableCars;
   }
 
