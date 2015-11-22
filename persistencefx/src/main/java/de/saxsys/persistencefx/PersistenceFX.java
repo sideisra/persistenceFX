@@ -1,7 +1,6 @@
 package de.saxsys.persistencefx;
 
 import java.lang.reflect.Field;
-import java.util.LinkedList;
 import java.util.List;
 
 import de.saxsys.persistencefx.error.BuildException;
@@ -11,8 +10,12 @@ import de.saxsys.persistencefx.model.ModelListener;
 import de.saxsys.persistencefx.model.ModelWalker;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -25,7 +28,8 @@ public class PersistenceFX<ModelRootType> implements ModelListener<ModelRootType
 
   private final PersistenceProvider<ModelRootType> persistenceProvider;
   private final BooleanProperty autoCommit = new SimpleBooleanProperty();
-  private final List<Runnable> events = new LinkedList<>();
+  private final ListProperty<Runnable> events = new SimpleListProperty<>(FXCollections.observableArrayList());
+  private final ReadOnlyBooleanWrapper dirty = new ReadOnlyBooleanWrapper();
   private final ObjectProperty<ErrorHandler<ModelRootType>> errorHandler = new SimpleObjectProperty<>(
       new DefaultErrorHandler<>());
 
@@ -33,6 +37,7 @@ public class PersistenceFX<ModelRootType> implements ModelListener<ModelRootType
 
   public PersistenceFX(final PersistenceProvider<ModelRootType> persistenceProvider) {
     this.persistenceProvider = persistenceProvider;
+    dirty.bind(events.emptyProperty().not());
   }
 
   public static <ModelType> FluentBuilder<ModelType> withPersistenceProvider(
@@ -158,6 +163,14 @@ public class PersistenceFX<ModelRootType> implements ModelListener<ModelRootType
         }
       });
     }
+  }
+
+  public ReadOnlyBooleanProperty dirtyProperty() {
+    return dirty.getReadOnlyProperty();
+  }
+
+  public final boolean isDirty() {
+    return dirty.get();
   }
 
 }

@@ -1,5 +1,6 @@
 package de.saxsys.persistencefx;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
@@ -275,5 +276,24 @@ public class PersistenceFXTest {
 
     verify(errorHandler).rootModelListError(eq(Collections.singletonList(newModelRoot)),
         eq(Collections.emptyList()), any(RuntimeException.class));
+  }
+
+  @Test
+  public void uncommittedChangesSetDirtyFlag() {
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+    model.setStringProp("new");
+
+    assertThat(cut.isDirty()).isTrue();
+  }
+
+  @Test
+  public void dirtyFlagIsResetonCommit() {
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+    model.setStringProp("new");
+    assertThat(cut.isDirty()).isTrue();
+
+    cut.commit();
+
+    assertThat(cut.isDirty()).isFalse();
   }
 }
