@@ -62,7 +62,7 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
     persist(containingModelEntity);
   }
 
-  public void persist(final Object containingModelEntity) {
+  private void persist(final Object containingModelEntity) {
     inTransaction(em -> {
       if (em.contains(containingModelEntity)) {
         em.merge(containingModelEntity);
@@ -72,8 +72,10 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
     });
   }
 
-  public void deleteManufacturer(final Object containingModelEntity) {
-    inTransaction(em -> em.remove(em.merge(containingModelEntity)));
+  private void remove(final Object containingModelEntity) {
+    inTransaction(em -> {
+      em.remove(em.merge(containingModelEntity));
+    });
   }
 
   private void inTransaction(final Consumer<EntityManager> command) {
@@ -95,6 +97,6 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
   @Override
   public void modelRootListChanged(final List<?> added, final List<?> removed) {
     added.forEach(this::persist);
-    removed.forEach(this::persist);
+    removed.forEach(this::remove);
   }
 }
