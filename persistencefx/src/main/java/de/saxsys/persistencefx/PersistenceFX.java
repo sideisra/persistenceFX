@@ -32,7 +32,6 @@ public class PersistenceFX<ModelRootType> implements ModelListener<ModelRootType
   private final ObservableList<ModelRootType> modelRoots = FXCollections.observableArrayList();
 
   public PersistenceFX(final PersistenceProvider<ModelRootType> persistenceProvider) {
-    super();
     this.persistenceProvider = persistenceProvider;
   }
 

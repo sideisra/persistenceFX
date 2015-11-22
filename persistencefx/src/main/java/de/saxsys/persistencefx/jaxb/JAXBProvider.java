@@ -22,7 +22,6 @@ public class JAXBProvider<ModelRootType> implements PersistenceProvider<ModelRoo
   private ModelRootType model;
 
   public JAXBProvider(final Path xmlPath, final ModelRootType initialModel) throws JAXBException {
-    super();
     this.xmlPath = xmlPath;
     context = JAXBContext.newInstance(initialModel.getClass());
     model = initialModel;
