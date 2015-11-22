@@ -14,21 +14,22 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
-public class ModelWalker {
+public class ModelWalker<ModelRootType> {
 
-  public void walkModelRoots(final ObservableList<?> modelRoots, final ModelListener modelListener) {
+  public void walkModelRoots(final ObservableList<ModelRootType> modelRoots,
+      final ModelListener<ModelRootType> modelListener) {
     modelRoots.forEach(modelRoot -> walkModel(modelRoot, modelListener));
-    modelRoots.addListener((ListChangeListener<Object>) c -> {
+    modelRoots.addListener((ListChangeListener<ModelRootType>) c -> {
       while (c.next()) {
-        final List<?> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
+        final List<ModelRootType> added = c.wasAdded() ? new ArrayList<>(c.getAddedSubList()) : Collections.emptyList();
         added.forEach(newModelRoot -> walkModel(newModelRoot, modelListener));
-        final List<?> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
+        final List<ModelRootType> removed = c.wasRemoved() ? new ArrayList<>(c.getRemoved()) : Collections.emptyList();
         modelListener.modelRootListChanged(added, removed);
       }
     });
   }
 
-  private void walkModel(final Object model, final ModelListener modelListener) {
+  private void walkModel(final Object model, final ModelListener<ModelRootType> modelListener) {
     final List<Object> nonProps = new LinkedList<>();
     final BooleanProperty propsFound = new SimpleBooleanProperty();
     Arrays.stream(model.getClass().getDeclaredFields()).forEach(field -> {
@@ -63,7 +64,8 @@ public class ModelWalker {
   }
 
   @SuppressWarnings("unchecked")
-  private void listenToObservableList(final Object model, final ModelListener modelListener, final Field field,
+  private void listenToObservableList(final Object model, final ModelListener<ModelRootType> modelListener,
+      final Field field,
       final Object fieldInst) {
     final ObservableList<? extends Object> obsList = (ObservableList<? extends Object>) fieldInst;
     obsList.addListener((ListChangeListener<? super Object>) (c) -> {
@@ -78,7 +80,8 @@ public class ModelWalker {
   }
 
   @SuppressWarnings("unchecked")
-  private void listenToObservableValue(final Object model, final ModelListener modelListener, final Object fieldInst) {
+  private void listenToObservableValue(final Object model, final ModelListener<ModelRootType> modelListener,
+      final Object fieldInst) {
     ((ObservableValue<? extends Object>) fieldInst).addListener(
         (ChangeListener<? super Object>) (observable, oldValue, newValue) -> {
           if (oldValue != newValue) {

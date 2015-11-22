@@ -71,6 +71,7 @@ public class Manufacturer {
     return cars;
   }
 
+  @SuppressWarnings("unused") // just for jpa
   private void setCars(final List<Car> cars) {
     this.cars = cars;
     this.observableCars.set(FXCollections.observableList(cars));

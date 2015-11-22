@@ -33,6 +33,7 @@ public class CascadePersistJPAProvider<ModelType> implements PersistenceProvider
     this.modelTypeClass = modelTypeClass;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public List<ModelType> load() {
     em = factory.createEntityManager();

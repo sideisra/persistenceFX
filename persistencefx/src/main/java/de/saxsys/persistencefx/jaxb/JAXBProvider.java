@@ -15,24 +15,25 @@ import de.saxsys.persistencefx.persistence.PersistenceProvider;
  * Implementation of {@link PersistenceProvider} for persisting the model with
  * JAXB.
  */
-public class JAXBProvider<ModelType> implements PersistenceProvider<ModelType> {
+public class JAXBProvider<ModelRootType> implements PersistenceProvider<ModelRootType> {
 
   private final JAXBContext context;
   private final Path xmlPath;
-  private ModelType model;
+  private ModelRootType model;
 
-  public JAXBProvider(final Path xmlPath, final ModelType initialModel) throws JAXBException {
+  public JAXBProvider(final Path xmlPath, final ModelRootType initialModel) throws JAXBException {
     super();
     this.xmlPath = xmlPath;
     context = JAXBContext.newInstance(initialModel.getClass());
     model = initialModel;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public List<ModelType> load() {
+  public List<ModelRootType> load() {
     try {
       if (Files.exists(xmlPath)) {
-        model = (ModelType) context.createUnmarshaller().unmarshal(xmlPath.toFile());
+        model = (ModelRootType) context.createUnmarshaller().unmarshal(xmlPath.toFile());
       }
       return Collections.singletonList(model);
     } catch (final JAXBException loadEx) {

@@ -19,6 +19,7 @@ import de.saxsys.persistencefx.model.testdata.TestModel;
 import de.saxsys.persistencefx.persistence.PersistenceProvider;
 
 public class PersistenceFXTest {
+  @SuppressWarnings("unchecked")
   final PersistenceProvider<TestModel> persistenceProvider = mock(PersistenceProvider.class);
   final TestModel model = new TestModel();
 
@@ -72,6 +73,18 @@ public class PersistenceFXTest {
   }
 
   @Test
+  public void rootModelListChangedEventsShouldNotBeDelegatedDirectlyToPersistenceProviderWhenAutoCommitIsFalse()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+    final TestModel testModel = new TestModel();
+    cut.getModelRoots().add(testModel);
+
+    verify(persistenceProvider, times(0)).modelRootListChanged(eq(Collections.singletonList(testModel)),
+        eq(Collections.emptyList()));
+  }
+
+  @Test
   public void autoCommitStateShouldBeSwitchable() {
     final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).autoCommit()
         .build();
@@ -110,6 +123,23 @@ public class PersistenceFXTest {
   }
 
   @Test
+  public void suspendedRootModelListChangedEventsShouldBeDelegatedToPersistenceProviderOnCommit()
+      throws NoSuchFieldException, SecurityException {
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
+
+    final TestModel testModel = new TestModel();
+    cut.getModelRoots().add(testModel);
+
+    verify(persistenceProvider, times(0)).modelRootListChanged(eq(Collections.singletonList(testModel)),
+        eq(Collections.emptyList()));
+
+    cut.commit();
+
+    verify(persistenceProvider, times(1)).modelRootListChanged(eq(Collections.singletonList(testModel)),
+        eq(Collections.emptyList()));
+  }
+
+  @Test
   public void secondCommitShouldNotFireOldEvents()
       throws NoSuchFieldException, SecurityException {
     final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider).build();
@@ -138,10 +168,11 @@ public class PersistenceFXTest {
     verify(persistenceProvider).propertyChanged(model);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void errorsShouldBeDelegatedToErrorHandlerWhileCommiting()
       throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler<TestModel> errorHandler = mock(ErrorHandler.class);
     final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
         .errorHandler(errorHandler).build();
 
@@ -155,10 +186,11 @@ public class PersistenceFXTest {
     verify(errorHandler).error(same(model), same(runEx));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void errorsShouldBeDelegatedToErrorHandlerOnAutoCommit()
       throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler<TestModel> errorHandler = mock(ErrorHandler.class);
     PersistenceFX.withPersistenceProvider(persistenceProvider)
         .errorHandler(errorHandler).autoCommit().build();
 
@@ -170,10 +202,11 @@ public class PersistenceFXTest {
     verify(errorHandler).error(same(model), same(runEx));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerWhileCommiting()
       throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler<TestModel> errorHandler = mock(ErrorHandler.class);
     final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
         .errorHandler(errorHandler).build();
 
@@ -187,10 +220,11 @@ public class PersistenceFXTest {
     verify(errorHandler).error(same(model), same(runEx));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void errorsOnListChangeEventsShouldBeDelegatedToErrorHandlerOnAutoCommit()
       throws NoSuchFieldException, SecurityException {
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler<TestModel> errorHandler = mock(ErrorHandler.class);
     PersistenceFX.withPersistenceProvider(persistenceProvider)
         .errorHandler(errorHandler).autoCommit().build();
 
@@ -224,5 +258,22 @@ public class PersistenceFXTest {
     newModelRoot.setStringProp("new");
 
     verify(persistenceProvider).propertyChanged(newModelRoot);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void errorsDuringRootListEventsShouldBeDelegatedToErrorHandler() {
+    final ErrorHandler<TestModel> errorHandler = mock(ErrorHandler.class);
+    final PersistenceFX<TestModel> cut = PersistenceFX.withPersistenceProvider(persistenceProvider)
+        .errorHandler(errorHandler)
+        .autoCommit()
+        .build();
+    doThrow(RuntimeException.class).when(persistenceProvider).modelRootListChanged(any(), any());
+
+    final TestModel newModelRoot = new TestModel();
+    cut.getModelRoots().add(newModelRoot);
+
+    verify(errorHandler).rootModelListError(eq(Collections.singletonList(newModelRoot)),
+        eq(Collections.emptyList()), any(RuntimeException.class));
   }
 }

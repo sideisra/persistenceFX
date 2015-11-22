@@ -20,11 +20,12 @@ import javafx.collections.FXCollections;
 
 public class ModelWalkerTest {
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldRegisterListenerForObservableValues() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModel.setStringProp("new");
@@ -32,13 +33,14 @@ public class ModelWalkerTest {
     verify(testListener).propertyChanged(same(testModel));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldRegisterListenerForObservableLists() throws NoSuchFieldException, SecurityException {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
     final String toBeRemoved = "toBeRemoved";
     testModel.getObsList().add(toBeRemoved);
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModel.getObsList().add("new");
@@ -50,11 +52,12 @@ public class ModelWalkerTest {
         eq(Collections.emptyList()), eq(Arrays.asList(toBeRemoved)));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldWalkModelRecursively() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModel.setStringProp("new");
@@ -62,11 +65,12 @@ public class ModelWalkerTest {
     verify(testListener).propertyChanged(testModel);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldStopRecursionWhenClassContainsNoProperties() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModel.getWithoutProps().getTestModel().setStringProp("new");
@@ -74,21 +78,23 @@ public class ModelWalkerTest {
     verifyZeroInteractions(testListener);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void nullValuesAreIgnored() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModelWithNullValues> cut = new ModelWalker<>();
     final TestModelWithNullValues testModel = new TestModelWithNullValues();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModelWithNullValues> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     verifyZeroInteractions(testListener);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldListenToPropAndListChangesOfListProperties() throws NoSuchFieldException, SecurityException {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModel.getListProp().add("new");
@@ -101,13 +107,14 @@ public class ModelWalkerTest {
     verify(testListener).propertyChanged(same(testModel));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldListenToPropsInListEntries() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
     final TestModelWithProps testModelWithProps = new TestModelWithProps();
     testModel.getObsListWithProps().add(testModelWithProps);
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     testModelWithProps.setStringProp("new");
@@ -115,11 +122,12 @@ public class ModelWalkerTest {
     verify(testListener).propertyChanged(same(testModelWithProps));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldListenToPropsInNewlyAddedListEntries() {
-    final ModelWalker cut = new ModelWalker();
+    final ModelWalker<TestModel> cut = new ModelWalker<>();
     final TestModel testModel = new TestModel();
-    final ModelListener testListener = mock(ModelListener.class);
+    final ModelListener<TestModel> testListener = mock(ModelListener.class);
     cut.walkModelRoots(FXCollections.observableArrayList(testModel), testListener);
 
     final TestModelWithProps testModelWithProps = new TestModelWithProps();
